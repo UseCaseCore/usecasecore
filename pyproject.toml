@@ -8,10 +8,41 @@ version = "0.1.0"
 description = "The standard runtime for application use cases."
 readme = "README.md"
 requires-python = ">=3.11"
+license = { file = "LICENSE" }
 authors = [
   { name = "UseCaseCore" }
 ]
+maintainers = [
+  { name = "UseCaseCore" }
+]
+keywords = [
+  "application-services",
+  "audit",
+  "business-logic",
+  "commands",
+  "idempotency",
+  "transactions",
+  "use-cases",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://usecasecore.com"
+Repository = "https://github.com/UseCaseCore/usecasecore"
+Documentation = "https://usecasecore.pages.dev"
+Issues = "https://github.com/UseCaseCore/usecasecore/issues"
+Changelog = "https://github.com/UseCaseCore/usecasecore/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.4"]
@@ -27,6 +58,9 @@ transitions = ["transitions>=0.9"]
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["usecasecore*"]
+
+[tool.setuptools.package-data]
+usecasecore = ["py.typed"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
