@@ -17,14 +17,14 @@ class Result(Generic[ValueT]):
     audit: Mapping[str, object] | None = None
 
     @classmethod
-    def ok(cls, value: ValueT) -> "Result[ValueT]":
+    def ok(cls, value: ValueT) -> Result[ValueT]:
         return cls(value=value)
 
-    def with_event(self, event: object) -> "Result[ValueT]":
+    def with_event(self, event: object) -> Result[ValueT]:
         return replace(self, events=(*self.events, event))
 
-    def with_job(self, job: object) -> "Result[ValueT]":
+    def with_job(self, job: object) -> Result[ValueT]:
         return replace(self, jobs=(*self.jobs, job))
 
-    def with_audit(self, audit: Mapping[str, object]) -> "Result[ValueT]":
+    def with_audit(self, audit: Mapping[str, object]) -> Result[ValueT]:
         return replace(self, audit=audit)

@@ -36,3 +36,6 @@ jobs:
 
       - name: Run Ruff
         run: python -m ruff check .
+
+      - name: Build package
+        run: python -m build

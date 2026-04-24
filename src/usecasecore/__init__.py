@@ -12,8 +12,8 @@ from .errors import (
     JobEnqueueError,
     PolicyDenied,
     RepositoryError,
-    TransitionDenied,
     TransactionError,
+    TransitionDenied,
     UseCaseError,
     ValidationFailed,
 )

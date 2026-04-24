@@ -2,8 +2,8 @@
 
 from .models import (
     InventoryBalance,
-    InventoryMovement,
     InventoryMoved,
+    InventoryMovement,
     LowStockAlert,
     MoveInventoryCommand,
     MoveInventoryResult,
