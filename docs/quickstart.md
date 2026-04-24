@@ -3,7 +3,7 @@
 ## Install
 
 ```bash
-pip install usecasecore
+pip install usecasecore==0.1.0a2
 ```
 
 ## First mental model

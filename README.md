@@ -2,6 +2,11 @@
 
 The standard runtime for application use cases.
 
+[![CI](https://github.com/UseCaseCore/usecasecore/actions/workflows/ci.yml/badge.svg)](https://github.com/UseCaseCore/usecasecore/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/usecasecore?include_prereleases)](https://pypi.org/project/usecasecore/)
+![Python](https://img.shields.io/pypi/pyversions/usecasecore)
+![License](https://img.shields.io/github/license/UseCaseCore/usecasecore)
+
 UseCaseCore gives business actions one explicit, typed, transactional execution
 model across validation, state loading, policy checks, transitions, audit,
 idempotency, events, and side effects.
@@ -19,7 +24,7 @@ stack you already use.
 ## Install
 
 ```bash
-pip install usecasecore
+pip install usecasecore==0.1.0a2
 ```
 
 ## Core path
@@ -158,7 +163,7 @@ source /tmp/ucc-test/bin/activate
 python3 -m pip install \
   --index-url https://test.pypi.org/simple/ \
   --extra-index-url https://pypi.org/simple \
-  usecasecore
+  usecasecore==0.1.0a2
 python3 -c "from usecasecore import Command, Result, ExecutionContext, UseCase; print('OK')"
 deactivate
 ```
@@ -167,5 +172,5 @@ Only publish to PyPI after the TestPyPI install works.
 
 ## Status
 
-Early alpha moving toward `v0.1.0`. The core abstractions are intentionally
-small while the execution model settles.
+Early alpha. The current package release is `0.1.0a2`; the core abstractions
+are intentionally small while the execution model settles.
