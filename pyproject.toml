@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "usecasecore"
+version = "0.1.0"
+description = "The standard runtime for application use cases."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "UseCaseCore" }
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.4"]
+docs = ["mkdocs>=1.6", "mkdocs-material>=9"]
+pydantic = ["pydantic>=2"]
+fastapi = ["fastapi>=0.110"]
+sqlmodel = ["sqlmodel>=0.0.16"]
+sqlalchemy = ["sqlalchemy>=2"]
+temporal = ["temporalio>=1"]
+oso = ["oso>=0.27"]
+transitions = ["transitions>=0.9"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["usecasecore*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

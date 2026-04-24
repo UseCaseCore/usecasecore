@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UseCaseCore — The standard runtime for application use cases</title>
+  <meta
+    name="description"
+    content="UseCaseCore standardizes the service layer: commands, state loading, policy checks, transactions, audit, events, and side effects — across FastAPI, SQLModel, SQLAlchemy, Postgres, Alembic, and more."
+  />
+  <meta property="og:title" content="UseCaseCore — The standard runtime for application use cases" />
+  <meta
+    property="og:description"
+    content="The missing layer between validated requests and committed truth."
+  />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#060b16" />
+
+  <style>
+    :root {
+      --bg: #060b16;
+      --panel: rgba(14, 22, 38, 0.72);
+      --panel-2: rgba(11, 18, 32, 0.92);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.14);
+      --text: #e8eefb;
+      --muted: #a9b4c9;
+      --muted-2: #7f8aa3;
+      --accent: #6ea8fe;
+      --accent-2: #96f0ff;
+      --accent-3: #9f8cff;
+      --success: #86efac;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      --radius-lg: 24px;
+      --radius-md: 18px;
+      --max: 1200px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(110, 168, 254, 0.16), transparent 0 28%),
+        radial-gradient(circle at 85% 0%, rgba(159, 140, 255, 0.14), transparent 0 26%),
+        radial-gradient(circle at 60% 60%, rgba(150, 240, 255, 0.07), transparent 0 24%),
+        linear-gradient(180deg, #050913 0%, #08101d 35%, #060b16 100%);
+      min-height: 100vh;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .container { width: min(calc(100% - 32px), var(--max)); margin: 0 auto; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      backdrop-filter: blur(10px);
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 18px rgba(110, 168, 254, 0.8);
+    }
+
+    .section { padding: 96px 0; }
+    .section-header { max-width: 760px; margin-bottom: 32px; }
+
+    .section-header h2 {
+      margin: 0 0 14px;
+      font-size: clamp(32px, 4vw, 52px);
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .section-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 700px;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(16px);
+      background: linear-gradient(180deg, rgba(5, 9, 19, 0.86), rgba(5, 9, 19, 0.58));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 78px;
+      gap: 16px;
+      position: relative;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-size: 18px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background:
+        linear-gradient(135deg, rgba(110, 168, 254, 0.25), rgba(159, 140, 255, 0.22)),
+        rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 12px 24px rgba(0, 0, 0, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-mark::before,
+    .brand-mark::after {
+      content: "";
+      position: absolute;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      opacity: 0.95;
+    }
+
+    .brand-mark::before { width: 18px; height: 4px; transform: rotate(45deg); }
+    .brand-mark::after { width: 18px; height: 4px; transform: rotate(-45deg); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .menu-toggle {
+      display: none;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      color: #06101d;
+      background: linear-gradient(135deg, #ecf5ff, #bfe1ff 55%, #9ddcff);
+      box-shadow: 0 14px 30px rgba(110, 168, 254, 0.2);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+
+    .hero {
+      padding: 64px 0 56px;
+      overflow: clip;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 36px;
+      align-items: center;
+    }
+
+    .hero-copy h1 {
+      margin: 18px 0 18px;
+      font-size: clamp(48px, 6.8vw, 86px);
+      line-height: 0.96;
+      letter-spacing: -0.055em;
+      max-width: 900px;
+    }
+
+    .hero-copy .subhead {
+      margin: 0 0 10px;
+      max-width: 760px;
+      color: var(--text);
+      font-size: 22px;
+      line-height: 1.45;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-copy .lede {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1.68;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .meta-pill {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .hero-panel,
+    .card,
+    .comparison,
+    .cta-panel {
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel {
+      background: linear-gradient(180deg, rgba(12, 19, 34, 0.95), rgba(8, 13, 24, 0.9));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .window-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .window-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .window-label {
+      color: var(--muted-2);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .window-body { padding: 22px; }
+
+    .terminal-card {
+      background: linear-gradient(180deg, rgba(8, 13, 24, 0.95), rgba(7, 11, 19, 1));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+
+    .terminal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--muted-2);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    pre {
+      margin: 0;
+      overflow: auto;
+      padding: 18px 18px 20px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #dce7fb;
+      background: transparent;
+    }
+
+    .token-class { color: #9f8cff; }
+    .token-fn { color: #8de29f; }
+    .token-key { color: #96f0ff; }
+    .token-op { color: #b5c4dd; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 26px;
+      letter-spacing: -0.04em;
+      margin-bottom: 6px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .logo-row {
+      margin-top: 56px;
+      padding: 18px 22px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      align-items: center;
+      color: var(--muted);
+      text-align: center;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+
+    .card {
+      background: linear-gradient(180deg, rgba(15, 24, 41, 0.86), rgba(10, 16, 29, 0.92));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px;
+      overflow: hidden;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: -0.03em;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background:
+        linear-gradient(135deg, rgba(110, 168, 254, 0.18), rgba(150, 240, 255, 0.12)),
+        rgba(255, 255, 255, 0.03);
+      font-size: 18px;
+    }
+
+    .workflow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .workflow-step {
+      padding: 20px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(15, 24, 41, 0.82), rgba(10, 16, 29, 0.96));
+      min-height: 182px;
+    }
+
+    .workflow-step strong {
+      display: inline-flex;
+      width: 30px;
+      height: 30px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: rgba(110, 168, 254, 0.14);
+      border: 1px solid rgba(110, 168, 254, 0.25);
+      color: #cae3ff;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .workflow-step h4 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .workflow-step p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .code-architecture {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .architecture-diagram { padding: 24px; }
+    .stack-flow { display: grid; gap: 12px; }
+
+    .stack-node {
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.035);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .stack-node .label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stack-node .label strong {
+      font-size: 15px;
+      letter-spacing: -0.02em;
+    }
+
+    .stack-node .label span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stack-badge {
+      border-radius: 999px;
+      padding: 7px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .stack-arrow {
+      text-align: center;
+      color: var(--muted-2);
+      font-size: 18px;
+    }
+
+    .integration-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .integration-card {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .integration-card h4 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .integration-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .comparison {
+      overflow: hidden;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 18px 20px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    td {
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    td small {
+      color: var(--muted);
+      display: block;
+      margin-top: 4px;
+    }
+
+    .check { color: var(--success); font-weight: 800; }
+    .x { color: #fca5a5; font-weight: 800; }
+
+    .cta-panel {
+      padding: 34px;
+      border-radius: 28px;
+      border: 1px solid var(--border-strong);
+      background:
+        radial-gradient(circle at 15% 15%, rgba(110, 168, 254, 0.18), transparent 0 30%),
+        radial-gradient(circle at 85% 85%, rgba(150, 240, 255, 0.12), transparent 0 26%),
+        linear-gradient(180deg, rgba(11, 18, 32, 0.96), rgba(8, 13, 24, 0.98));
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .cta-panel h2 {
+      margin: 0 0 12px;
+      font-size: clamp(34px, 4vw, 54px);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+    }
+
+    .cta-panel p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 680px;
+    }
+
+    .cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .footer {
+      padding: 28px 0 42px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .footer-wrap {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    @media (max-width: 1120px) {
+      .hero-grid,
+      .code-architecture,
+      .cta-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .workflow {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .integration-grid,
+      .grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .logo-row {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 860px) {
+      .nav-links,
+      .nav-actions .btn-secondary {
+        display: none;
+      }
+
+      .menu-toggle { display: inline-flex; }
+      .nav.open .nav-drawer { display: block; }
+
+      .nav-drawer {
+        display: none;
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 16px;
+        right: 16px;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: rgba(7, 12, 21, 0.98);
+        box-shadow: var(--shadow);
+        padding: 14px;
+      }
+
+      .nav-drawer a {
+        display: block;
+        padding: 12px 10px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      .grid-3,
+      .integration-grid,
+      .workflow,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cta-actions { justify-content: flex-start; }
+
+      .footer-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .section { padding: 72px 0; }
+      .hero { padding: 36px 0 40px; }
+    }
+
+    @media (max-width: 560px) {
+      .hero-copy h1 { font-size: 44px; }
+      .hero-copy .subhead,
+      .hero-copy .lede,
+      .section-header p,
+      .cta-panel p { font-size: 16px; }
+
+      .container { width: min(calc(100% - 20px), var(--max)); }
+
+      .card,
+      .workflow-step,
+      .cta-panel,
+      .window-body,
+      .architecture-diagram { padding: 18px; }
+
+      th, td { padding: 14px 14px; }
+      .logo-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav" id="nav">
+      <a href="#" class="brand" aria-label="UseCaseCore home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>UseCaseCore</span>
+      </a>
+
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#model">Execution model</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#integrations">Integrations</a>
+        <a href="#docs">Docs</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="btn btn-secondary" href="#docs">Read the docs</a>
+        <a class="btn btn-primary" href="#cta">Get started</a>
+        <button class="menu-toggle" id="menuToggle" aria-label="Open menu">Menu</button>
+      </div>
+
+      <div class="nav-drawer" id="navDrawer">
+        <a href="#features">Features</a>
+        <a href="#model">Execution model</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#integrations">Integrations</a>
+        <a href="#docs">Docs</a>
+        <a href="#cta">Get started</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <span class="eyebrow">Python infrastructure for serious application design</span>
+            <h1>The standard runtime for application use cases.</h1>
+            <p class="subhead">
+              Your API layer is standardized. Your data layer is standardized.
+              Your service layer is still where the chaos lives.
+            </p>
+            <p class="lede">
+              UseCaseCore gives business actions one explicit, typed, transactional execution model —
+              across validation, state loading, policy checks, transitions, audit, idempotency,
+              events, and side effects.
+            </p>
+
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#cta">Get started</a>
+              <a class="btn btn-secondary" href="#docs">Read the docs</a>
+              <a class="btn btn-ghost" href="https://github.com/UseCaseCore" target="_blank" rel="noreferrer">View GitHub</a>
+            </div>
+
+            <div class="hero-meta">
+              <span class="meta-pill mono">pip install usecasecore</span>
+              <span class="meta-pill">Typed commands</span>
+              <span class="meta-pill">Transactional execution</span>
+              <span class="meta-pill">Audit + idempotency</span>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <div class="window-top">
+              <div class="window-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="window-label">The missing middle</div>
+            </div>
+            <div class="window-body">
+              <div class="terminal-card">
+                <div class="terminal-head">
+                  <span>architecture</span>
+                  <span class="mono">runtime-shape</span>
+                </div>
+                <pre>FastAPI
+  ↓
+Command model
+  ↓
+<span class="token-class">UseCaseCore</span>
+  ↓
+Repositories / Session
+  ↓
+SQLModel / SQLAlchemy
+  ↓
+Postgres
+
+<span class="token-key">Alembic</span> evolves schema</pre>
+              </div>
+
+              <div class="stats-grid">
+                <div class="stat">
+                  <strong>Typed commands</strong>
+                  <span>Business intent enters the system as explicit, validated input.</span>
+                </div>
+                <div class="stat">
+                  <strong>Explicit transactions</strong>
+                  <span>Authoritative changes happen inside one visible execution boundary.</span>
+                </div>
+                <div class="stat">
+                  <strong>Audit + idempotency</strong>
+                  <span>Retries stay safe, and every state-changing action can leave a trace.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="logo-row" aria-label="Works with">
+          <span>FastAPI</span>
+          <span>Pydantic</span>
+          <span>SQLModel</span>
+          <span>SQLAlchemy</span>
+          <span>Postgres</span>
+          <span>Alembic</span>
+          <span>Oso</span>
+          <span>pytransitions</span>
+          <span>Temporal</span>
+          <span>Camunda</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">Core value</span>
+          <h2>Standardize the most important layer in your application.</h2>
+          <p>
+            UseCaseCore does not replace your API framework, ORM, database, or workflow tools.
+            It standardizes the execution boundary where business actions actually happen.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <article class="card">
+            <div class="icon">⌘</div>
+            <h3>Explicit use cases</h3>
+            <p>Every business action becomes a first-class unit with a typed command, a clear execution path, and a typed result.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon">⇄</div>
+            <h3>Transactional truth</h3>
+            <p>Authoritative changes happen inside a visible transaction boundary, not across scattered helpers and side effects.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon">◎</div>
+            <h3>Idempotency</h3>
+            <p>Retries stay safe. The same action can be handled once without duplicating writes or downstream effects.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon">▤</div>
+            <h3>Audit by default</h3>
+            <p>Every state-changing action can leave a structured trace of who did what, when, and why.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon">⚑</div>
+            <h3>Event and job hooks</h3>
+            <p>Emit domain events and queue side effects consistently after truth has been updated.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon">▣</div>
+            <h3>Adapter-friendly</h3>
+            <p>Plug in policy engines, state machines, workflows, queues, and event buses without changing the core use-case model.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="model">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">Execution model</span>
+          <h2>One predictable path from intent to committed truth.</h2>
+          <p>
+            Every use case follows the same operational grammar. That makes the system easier to understand,
+            easier to test, and easier to evolve.
+          </p>
+        </div>
+
+        <div class="workflow">
+          <div class="workflow-step">
+            <strong>01</strong>
+            <h4>Receive command</h4>
+            <p>Validated input arrives as a typed command from an API, job, or internal caller.</p>
+          </div>
+          <div class="workflow-step">
+            <strong>02</strong>
+            <h4>Load state</h4>
+            <p>Repositories load the exact state the action depends on, including locking when needed.</p>
+          </div>
+          <div class="workflow-step">
+            <strong>03</strong>
+            <h4>Check policy and transitions</h4>
+            <p>Authorization, lifecycle rules, and domain conditions are evaluated in one place.</p>
+          </div>
+          <div class="workflow-step">
+            <strong>04</strong>
+            <h4>Apply changes</h4>
+            <p>Authoritative writes happen inside a visible transaction boundary with commit or rollback.</p>
+          </div>
+          <div class="workflow-step">
+            <strong>05</strong>
+            <h4>Audit and side effects</h4>
+            <p>Write audit, emit events, and queue follow-up jobs after truth has been updated.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">Concrete example</span>
+          <h2>A request like <span class="mono">MoveInventory</span> is simple until it isn’t.</h2>
+          <p>
+            A move looks trivial at the UI level. In reality it needs validation, current-state reads,
+            permission checks, transaction boundaries, audit, and safe side effects.
+          </p>
+        </div>
+
+        <div class="comparison">
+          <table>
+            <thead>
+              <tr>
+                <th>Flow</th>
+                <th>What actually happens</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>MoveInventoryCommand</strong></td>
+                <td>Intent enters the system as a typed command instead of becoming route glue.</td>
+              </tr>
+              <tr>
+                <td><strong>Load source + destination balances</strong></td>
+                <td>Repositories fetch current state, including locking and consistency rules where needed.</td>
+              </tr>
+              <tr>
+                <td><strong>Check permission + invariants</strong></td>
+                <td>Policy, state transition rules, and domain conditions are enforced in one boundary.</td>
+              </tr>
+              <tr>
+                <td><strong>Open transaction</strong></td>
+                <td>Apply authoritative balance changes, write movement history, then commit or rollback.</td>
+              </tr>
+              <tr>
+                <td><strong>Write audit + emit events + queue jobs</strong></td>
+                <td>Side effects become explicit and repeatable instead of being mixed into handler code.</td>
+              </tr>
+              <tr>
+                <td><strong>MoveInventoryResult</strong></td>
+                <td>The action returns a typed result instead of an ad hoc response assembled on the fly.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="architecture">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">Architecture</span>
+          <h2>Fits into the stack you already use.</h2>
+          <p>
+            UseCaseCore is not a replacement for FastAPI, SQLModel, SQLAlchemy, Postgres, or Alembic.
+            It is the runtime layer between validated input and committed writes.
+          </p>
+        </div>
+
+        <div class="code-architecture">
+          <div class="card architecture-diagram">
+            <div class="stack-flow">
+              <div class="stack-node">
+                <div class="label">
+                  <strong>FastAPI</strong>
+                  <span>Routes and dependency injection</span>
+                </div>
+                <div class="stack-badge">API layer</div>
+              </div>
+              <div class="stack-arrow">↓</div>
+              <div class="stack-node">
+                <div class="label">
+                  <strong>Command models</strong>
+                  <span>Pydantic / SQLModel typed input and output</span>
+                </div>
+                <div class="stack-badge">Validation</div>
+              </div>
+              <div class="stack-arrow">↓</div>
+              <div class="stack-node" style="border-color: rgba(110,168,254,0.28); background: rgba(110,168,254,0.07);">
+                <div class="label">
+                  <strong>UseCaseCore</strong>
+                  <span>Use cases, transactions, audit, idempotency, events, and jobs</span>
+                </div>
+                <div class="stack-badge">Service runtime</div>
+              </div>
+              <div class="stack-arrow">↓</div>
+              <div class="stack-node">
+                <div class="label">
+                  <strong>Repositories / Session</strong>
+                  <span>SQLModel / SQLAlchemy persistence boundaries</span>
+                </div>
+                <div class="stack-badge">Persistence</div>
+              </div>
+              <div class="stack-arrow">↓</div>
+              <div class="stack-node">
+                <div class="label">
+                  <strong>Postgres + Alembic</strong>
+                  <span>Source of truth and schema evolution</span>
+                </div>
+                <div class="stack-badge">Storage</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <div class="window-top">
+              <div class="window-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="window-label">Predictable use-case skeleton</div>
+            </div>
+            <div class="window-body">
+              <div class="terminal-card" style="margin-bottom:0;">
+                <div class="terminal-head">
+                  <span>python</span>
+                  <span class="mono">usecases/base.py</span>
+                </div>
+                <pre><span class="token-class">class</span> <span class="token-class">UseCase</span>:
+    <span class="token-class">def</span> <span class="token-fn">execute</span>(<span class="token-key">self</span>, command):
+        <span class="token-key">self</span>.<span class="token-fn">validate</span>(command)
+        <span class="token-key">self</span>.<span class="token-fn">check_idempotency</span>(command)
+
+        state <span class="token-op">=</span> <span class="token-key">self</span>.<span class="token-fn">load_state</span>(command)
+        <span class="token-key">self</span>.<span class="token-fn">check_policies</span>(command, state)
+        <span class="token-key">self</span>.<span class="token-fn">check_transitions</span>(command, state)
+
+        <span class="token-class">with</span> <span class="token-key">self</span>.<span class="token-fn">transaction</span>():
+            result <span class="token-op">=</span> <span class="token-key">self</span>.<span class="token-fn">apply</span>(command, state)
+            <span class="token-key">self</span>.<span class="token-fn">write_audit</span>(command, state, result)
+            <span class="token-key">self</span>.<span class="token-fn">emit_events</span>(command, state, result)
+            <span class="token-key">self</span>.<span class="token-fn">enqueue_jobs</span>(command, state, result)
+
+        <span class="token-class">return</span> result</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="integrations">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">Integrations</span>
+          <h2>Works with the tools real teams already use.</h2>
+          <p>
+            Keep the use case as the center of execution while exposing clean integration surfaces
+            for policies, transitions, workflows, events, and job systems.
+          </p>
+        </div>
+
+        <div class="integration-grid">
+          <article class="integration-card">
+            <h4>FastAPI</h4>
+            <p>Receive validated commands from routes and dependency-injected services.</p>
+          </article>
+          <article class="integration-card">
+            <h4>SQLModel</h4>
+            <p>Use typed models naturally without collapsing business actions into table definitions.</p>
+          </article>
+          <article class="integration-card">
+            <h4>SQLAlchemy</h4>
+            <p>Keep direct control over sessions, transactions, queries, and locking.</p>
+          </article>
+          <article class="integration-card">
+            <h4>Postgres</h4>
+            <p>Preserve the database as the authoritative store of truth.</p>
+          </article>
+          <article class="integration-card">
+            <h4>Alembic</h4>
+            <p>Schema evolution stays independent while runtime behavior becomes standardized.</p>
+          </article>
+          <article class="integration-card">
+            <h4>Oso</h4>
+            <p>Plug in policy and authorization logic without leaking it across routes and helpers.</p>
+          </article>
+          <article class="integration-card">
+            <h4>pytransitions</h4>
+            <p>Handle lifecycle-heavy domains with explicit transition adapters.</p>
+          </article>
+          <article class="integration-card">
+            <h4>Temporal</h4>
+            <p>Bridge long-running orchestration into the same application action model.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">Why this matters</span>
+          <h2>Most teams already have the tools. They do not have the runtime model.</h2>
+          <p>
+            The missing standard is not another ORM, API framework, or queue.
+            It is the layer that turns intent into safe, explicit, committed business actions.
+          </p>
+        </div>
+
+        <div class="comparison">
+          <table>
+            <thead>
+              <tr>
+                <th>Concern</th>
+                <th>Typical Python app</th>
+                <th>With UseCaseCore</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Business action boundaries</td>
+                <td><span class="x">Scattered</span><small>Routes, helpers, model methods, jobs, and one-off service code</small></td>
+                <td><span class="check">Explicit</span><small>Each action has one typed command, one execution boundary, one result</small></td>
+              </tr>
+              <tr>
+                <td>Transaction semantics</td>
+                <td><span class="x">Inconsistent</span><small>Often mixed with side effects or hidden inside utility layers</small></td>
+                <td><span class="check">Intentional</span><small>Commit / rollback behavior is explicit and reusable</small></td>
+              </tr>
+              <tr>
+                <td>Auditability</td>
+                <td><span class="x">Bolted on</span><small>Added later, partial, or easy to forget</small></td>
+                <td><span class="check">Built in</span><small>Actor, request, and state-change context become first-class</small></td>
+              </tr>
+              <tr>
+                <td>Idempotency</td>
+                <td><span class="x">Custom every time</span><small>Often absent or inconsistent across endpoints and jobs</small></td>
+                <td><span class="check">Standardized</span><small>Retries and duplicate handling follow one predictable pattern</small></td>
+              </tr>
+              <tr>
+                <td>Policy / workflow integration</td>
+                <td><span class="x">Leaky</span><small>Framework-specific logic bleeds into unrelated app code</small></td>
+                <td><span class="check">Adapter-based</span><small>Plug in policy, transition, queue, and workflow tools cleanly</small></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="docs">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">Getting started</span>
+          <h2>Start with the model. Then ship one real use case.</h2>
+          <p>
+            The fastest path to value is not more framework theory. It is one concrete business action
+            implemented correctly with a reusable execution shape.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <article class="card">
+            <h3>Learn the core abstractions</h3>
+            <p>Commands, results, repositories, transactions, audit hooks, idempotency, and adapters.</p>
+          </article>
+          <article class="card">
+            <h3>Implement one canonical action</h3>
+            <p>Start with something real like <span class="mono">MoveInventory</span>, <span class="mono">ReserveInventory</span>, or <span class="mono">CreateOrder</span>.</p>
+          </article>
+          <article class="card">
+            <h3>Expand only where needed</h3>
+            <p>Add policy engines, transitions, queues, or workflows only when the domain actually justifies them.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="cta">
+      <div class="container">
+        <div class="cta-panel">
+          <div>
+            <h2>Build cleaner application brains.</h2>
+            <p>
+              Make business actions explicit, transactional, auditable, idempotent, and integration-friendly —
+              without replacing the stack you already trust.
+            </p>
+          </div>
+
+          <div class="cta-actions">
+            <a class="btn btn-primary" href="https://docs.usecasecore.com">Read the docs</a>
+            <a class="btn btn-secondary" href="https://github.com/UseCaseCore" target="_blank" rel="noreferrer">View GitHub</a>
+            <a class="btn btn-ghost" href="mailto:hello@usecasecore.com">Contact</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-wrap">
+        <div>
+          <strong style="display:block; margin-bottom:6px; color:var(--text);">UseCaseCore</strong>
+          <span>The standard runtime for application use cases.</span>
+        </div>
+
+        <div class="footer-links">
+          <a href="#features">Features</a>
+          <a href="#model">Execution model</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#integrations">Integrations</a>
+          <a href="#docs">Docs</a>
+          <a href="https://github.com/UseCaseCore" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+
+        <div>
+          <span>© <span id="year"></span> UseCaseCore. All rights reserved.</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const nav = document.getElementById("nav");
+    const menuToggle = document.getElementById("menuToggle");
+    const navDrawer = document.getElementById("navDrawer");
+    const year = document.getElementById("year");
+
+    if (year) year.textContent = new Date().getFullYear();
+
+    if (menuToggle) {
+      menuToggle.addEventListener("click", () => {
+        nav.classList.toggle("open");
+      });
+    }
+
+    if (navDrawer) {
+      navDrawer.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => nav.classList.remove("open"));
+      });
+    }
+
+    document.addEventListener("click", (e) => {
+      if (!nav.contains(e.target)) {
+        nav.classList.remove("open");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+site_name: UseCaseCore
+site_description: The standard runtime for application use cases.
+repo_url: https://github.com/UseCaseCore/usecasecore
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Concepts: concepts.md
+  - Architecture: architecture.md
+  - Adapters: adapters.md
+  - MoveInventory: examples/move-inventory.md
