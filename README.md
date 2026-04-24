@@ -132,6 +132,39 @@ index.html                homepage
 - [MoveInventory example](docs/examples/move-inventory.md)
 - [Example source](examples/move_inventory)
 
+## Release Process
+
+Publishing is manual for now. Do not upload to PyPI until CI is green.
+
+Build and check the package:
+
+```bash
+rm -rf build dist src/usecasecore.egg-info
+python3 -m build
+python3 -m twine check dist/*
+```
+
+For TestPyPI, upload with a TestPyPI token:
+
+```bash
+python3 -m twine upload --repository testpypi dist/*
+```
+
+Then verify install in a clean environment:
+
+```bash
+python3 -m venv /tmp/ucc-test
+source /tmp/ucc-test/bin/activate
+python3 -m pip install \
+  --index-url https://test.pypi.org/simple/ \
+  --extra-index-url https://pypi.org/simple \
+  usecasecore
+python3 -c "from usecasecore import Command, Result, ExecutionContext, UseCase; print('OK')"
+deactivate
+```
+
+Only publish to PyPI after the TestPyPI install works.
+
 ## Status
 
 Early alpha moving toward `v0.1.0`. The core abstractions are intentionally

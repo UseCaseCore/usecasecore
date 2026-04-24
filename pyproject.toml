@@ -45,7 +45,7 @@ Issues = "https://github.com/UseCaseCore/usecasecore/issues"
 Changelog = "https://github.com/UseCaseCore/usecasecore/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
-dev = ["build>=1.2", "pytest>=8", "ruff>=0.4"]
+dev = ["build>=1.2", "packaging>=24.2", "pytest>=8", "ruff>=0.4", "twine>=5"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9"]
 pydantic = ["pydantic>=2"]
 fastapi = ["fastapi>=0.110"]
