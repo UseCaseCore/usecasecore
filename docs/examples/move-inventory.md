@@ -9,6 +9,7 @@ prevent invalid state transitions, commit related writes together, record an
 audit trail, publish an event, queue follow-up work, and make retries safe.
 
 UseCaseCore makes those responsibilities visible in one execution boundary.
+The command layer Python apps keep rebuilding by accident.
 
 ```text
 MoveInventoryCommand
@@ -41,6 +42,58 @@ The example uses:
 - movement history creation through the repository
 - `AuditSink`, `EventBus`, and `JobQueue` hooks for explicit side effects
 - `IdempotencyStore` replay so a retried command does not duplicate writes
+
+## Before / After: the route handler problem
+
+Stop hiding business mutations in FastAPI routes.
+
+In a typical FastAPI application, `MoveInventory` starts as a route and slowly
+turns into a service layer by accident. The route receives the request, reaches
+for the database session, loads rows, checks permissions, updates balances,
+writes history, publishes signals, queues follow-up jobs, remembers idempotency,
+and shapes the response.
+
+```python
+@app.post("/inventory/move")
+def move_inventory(request: MoveInventoryRequest, session: Session = Depends(get_session)):
+    # validate request
+    # load source and destination balances
+    # check permissions
+    # check inventory invariants
+    # update balances
+    # create movement history
+    # write audit
+    # publish event
+    # enqueue low-stock job
+    # remember idempotency
+    # return response
+```
+
+That works until the same action must also run from a worker, a retry path, an
+admin tool, or another internal workflow. The mutation boundary is now hidden in
+transport code.
+
+With UseCaseCore, the route only translates HTTP input into a command and maps
+the typed result back to HTTP output.
+
+```python
+@app.post("/inventory/move")
+def move_inventory(request: MoveInventoryRequest):
+    command = request.to_command()
+    result = move_inventory_use_case.execute(command)
+    return MoveInventoryResponse.from_result(result)
+```
+
+The route is now transport glue. The use case is the authoritative business
+mutation boundary.
+
+```text
+validate -> idempotency -> load state -> policy -> transitions -> transaction -> apply -> audit -> events -> jobs -> result
+```
+
+FastAPI standardizes the API layer. SQLAlchemy standardizes persistence.
+UseCaseCore standardizes the business action boundary: a standard execution
+spine for Python backend mutations.
 
 ## Command creation
 
@@ -398,8 +451,9 @@ internal callers.
 
 ## Why this is not just CRUD
 
-CRUD describes simple persistence operations. `MoveInventory` describes a
-business action.
+CRUD describes simple persistence operations. `MoveInventory` is not a CRUD
+example. It is a state-changing business action with multiple invariants and
+side effects.
 
 A CRUD implementation might update a balance row. A real inventory move has to
 coordinate multiple concerns:

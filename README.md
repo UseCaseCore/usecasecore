@@ -21,6 +21,10 @@ UseCaseCore standardizes that missing layer without replacing FastAPI,
 SQLModel, SQLAlchemy, Postgres, Alembic, Oso, pytransitions, Temporal, or the
 stack you already use.
 
+FastAPI standardizes the API layer. SQLAlchemy standardizes persistence. UseCaseCore standardizes the business action boundary.
+
+The command layer Python apps keep rebuilding by accident. A standard execution spine for Python backend mutations.
+
 ## Install
 
 ```bash
@@ -42,6 +46,59 @@ command
   -> emit events
   -> queue side effects
   -> return result
+```
+
+## Before / After: the route handler problem
+
+Stop hiding business mutations in FastAPI routes.
+
+Without a use-case boundary, a route handler for something like
+`MoveInventory` tends to collect every operational concern in one place:
+
+- request validation
+- business validation
+- database session access
+- row loading and locking
+- permission checks
+- state transition checks
+- balance mutation
+- movement history
+- audit logging
+- event publishing
+- job enqueueing
+- idempotency handling
+- response shaping
+
+```python
+@app.post("/inventory/move")
+def move_inventory(request: MoveInventoryRequest, session: Session = Depends(get_session)):
+    # validate request
+    # load source and destination balances
+    # check permissions
+    # check inventory invariants
+    # update balances
+    # create movement history
+    # write audit
+    # publish event
+    # enqueue low-stock job
+    # remember idempotency
+    # return response
+```
+
+With UseCaseCore, the route becomes transport glue:
+
+```python
+@app.post("/inventory/move")
+def move_inventory(request: MoveInventoryRequest):
+    command = request.to_command()
+    result = move_inventory_use_case.execute(command)
+    return MoveInventoryResponse.from_result(result)
+```
+
+The use case owns the authoritative business mutation boundary:
+
+```text
+validate -> idempotency -> load state -> policy -> transitions -> transaction -> apply -> audit -> events -> jobs -> result
 ```
 
 ## Quick example

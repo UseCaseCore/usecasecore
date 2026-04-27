@@ -764,6 +764,7 @@
       </a>
 
       <nav class="nav-links" aria-label="Primary">
+        <a href="#before-after">Before / After</a>
         <a href="#features">Features</a>
         <a href="#model">Execution model</a>
         <a href="#architecture">Architecture</a>
@@ -778,6 +779,7 @@
       </div>
 
       <div class="nav-drawer" id="navDrawer">
+        <a href="#before-after">Before / After</a>
         <a href="#features">Features</a>
         <a href="#model">Execution model</a>
         <a href="#architecture">Architecture</a>
@@ -876,6 +878,78 @@ Postgres
           <span>pytransitions</span>
           <span>Temporal</span>
           <span>Camunda</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="before-after">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">FastAPI route handlers</span>
+          <h2>Before / After: the route handler problem.</h2>
+          <p>
+            Stop hiding business mutations in FastAPI routes. The command layer Python apps keep
+            rebuilding by accident. A standard execution spine for Python backend mutations.
+          </p>
+        </div>
+
+        <div class="code-architecture">
+          <div class="terminal-card">
+            <div class="terminal-head">
+              <span>Before</span>
+              <span>Route owns the mutation</span>
+            </div>
+            <pre>@app.post("/inventory/move")
+def move_inventory(request, session):
+    # validate request
+    # load source and destination balances
+    # check permissions
+    # check inventory invariants
+    # update balances
+    # create movement history
+    # write audit
+    # publish event
+    # enqueue low-stock job
+    # remember idempotency
+    # return response</pre>
+          </div>
+
+          <div class="terminal-card">
+            <div class="terminal-head">
+              <span>After</span>
+              <span>Use case owns the mutation</span>
+            </div>
+            <pre>@app.post("/inventory/move")
+def move_inventory(request: MoveInventoryRequest):
+    command = request.to_command()
+    result = move_inventory_use_case.execute(command)
+    return MoveInventoryResponse.from_result(result)</pre>
+          </div>
+        </div>
+
+        <div class="comparison" style="margin-top:18px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Responsibility</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>FastAPI route</strong></td>
+                <td>The route is transport glue: receive the request, create a command, call the use case, and map the typed result to a response.</td>
+              </tr>
+              <tr>
+                <td><strong>UseCaseCore use case</strong></td>
+                <td>validate -> idempotency -> load state -> policy -> transitions -> transaction -> apply -> audit -> events -> jobs -> result</td>
+              </tr>
+              <tr>
+                <td><strong>Where it fits</strong></td>
+                <td>FastAPI standardizes the API layer. SQLAlchemy standardizes persistence. UseCaseCore standardizes the business action boundary.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
