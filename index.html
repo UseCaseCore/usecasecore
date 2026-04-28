@@ -765,6 +765,7 @@
 
       <nav class="nav-links" aria-label="Primary">
         <a href="#before-after">Before / After</a>
+        <a href="#backend-proof">Backend proof</a>
         <a href="#features">Features</a>
         <a href="#model">Execution model</a>
         <a href="#architecture">Architecture</a>
@@ -780,6 +781,7 @@
 
       <div class="nav-drawer" id="navDrawer">
         <a href="#before-after">Before / After</a>
+        <a href="#backend-proof">Backend proof</a>
         <a href="#features">Features</a>
         <a href="#model">Execution model</a>
         <a href="#architecture">Architecture</a>
@@ -947,6 +949,96 @@ def move_inventory(request: MoveInventoryRequest):
               <tr>
                 <td><strong>Where it fits</strong></td>
                 <td>FastAPI standardizes the API layer. SQLAlchemy standardizes persistence. UseCaseCore standardizes the business action boundary.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="backend-proof">
+      <div class="container">
+        <div class="section-header">
+          <span class="eyebrow">Working example</span>
+          <h2>FastAPI + SQLAlchemy: real backend proof.</h2>
+          <p>
+            UseCaseCore is not an API framework and not an ORM. FastAPI handles transport.
+            Pydantic handles request and response shape. SQLAlchemy handles persistence.
+            UseCaseCore handles the business action lifecycle.
+          </p>
+        </div>
+
+        <div class="code-architecture">
+          <div class="hero-panel">
+            <div class="window-top">
+              <div class="window-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="window-label">POST /inventory/move</div>
+            </div>
+            <div class="window-body">
+              <div class="terminal-card" style="margin-bottom:0;">
+                <div class="terminal-head">
+                  <span>FastAPI + SQLAlchemy</span>
+                  <span class="mono">examples/</span>
+                </div>
+                <pre>POST /inventory/move
+  ↓
+MoveInventoryRequest
+  ↓
+MoveInventoryCommand
+  ↓
+MoveInventoryUseCase
+  ↓
+SQLAlchemyInventoryRepository
+  ↓
+inventory_balances + inventory_movements
+  ↓
+audit_records + outbox_records + idempotency_records
+  ↓
+MoveInventoryResponse</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>What this proves</h3>
+            <p>
+              The route stays small, mutation logic is outside FastAPI, and the SQLAlchemy
+              session commits at the use-case boundary.
+            </p>
+            <div style="height:18px;"></div>
+            <table>
+              <tbody>
+                <tr>
+                  <td><strong>Idempotency</strong></td>
+                  <td>Repeated keys return the same result without duplicate writes.</td>
+                </tr>
+                <tr>
+                  <td><strong>Audit + outbox</strong></td>
+                  <td>Audit and outbox records are written with the mutation.</td>
+                </tr>
+                <tr>
+                  <td><strong>Safe failures</strong></td>
+                  <td>Invalid transitions return errors before state changes.</td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="height:18px;"></div>
+            <a class="btn btn-secondary" href="https://github.com/UseCaseCore/usecasecore/tree/main/examples/fastapi_sqlalchemy_inventory" target="_blank" rel="noreferrer">View the example</a>
+          </div>
+        </div>
+
+        <div class="comparison" style="margin-top:18px;">
+          <table>
+            <thead>
+              <tr>
+                <th>UseCaseCore lifecycle</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>validate -> idempotency -> load state -> policy -> transitions -> transaction -> apply -> audit -> outbox -> jobs -> result</td>
               </tr>
             </tbody>
           </table>

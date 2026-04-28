@@ -101,6 +101,29 @@ The use case owns the authoritative business mutation boundary:
 validate -> idempotency -> load state -> policy -> transitions -> transaction -> apply -> audit -> events -> jobs -> result
 ```
 
+## Real backend example
+
+The [FastAPI + SQLAlchemy inventory example](examples/fastapi_sqlalchemy_inventory)
+shows the same `MoveInventory` action inside a realistic Python backend stack:
+
+```text
+FastAPI route
+  -> Pydantic request
+  -> MoveInventoryCommand
+  -> MoveInventoryUseCase
+  -> SQLAlchemy repository
+  -> transaction
+  -> inventory_movements + audit_records + outbox_records + idempotency_records
+  -> Pydantic response
+```
+
+The FastAPI route is transport glue. The use case is the business mutation
+boundary. SQLAlchemy owns persistence. UseCaseCore owns the action lifecycle:
+
+```text
+validate -> idempotency -> load state -> policy -> transitions -> transaction -> apply -> audit -> outbox -> jobs -> result
+```
+
 ## Quick example
 
 ```python
