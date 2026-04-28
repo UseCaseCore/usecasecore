@@ -180,6 +180,8 @@ Alembic evolves schema.
 src/usecasecore/          core package
 src/usecasecore/adapters/ adapter protocols
 examples/move_inventory/ canonical example
+examples/fastapi_sqlalchemy_inventory/
+                          FastAPI + SQLAlchemy example
 docs/                     documentation stubs
 tests/                    lifecycle and example tests
 index.html                homepage
@@ -193,6 +195,7 @@ index.html                homepage
 - [Adapters](docs/adapters.md)
 - [MoveInventory example](docs/examples/move-inventory.md)
 - [Example source](examples/move_inventory)
+- [FastAPI + SQLAlchemy inventory example](examples/fastapi_sqlalchemy_inventory)
 
 ## Release Process
 

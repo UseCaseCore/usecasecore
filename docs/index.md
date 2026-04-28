@@ -16,3 +16,4 @@ command -> idempotency -> state -> policy -> transaction -> audit -> events -> j
 - [Architecture](architecture.md)
 - [Adapters](adapters.md)
 - [MoveInventory example](examples/move-inventory.md)
+- [FastAPI + SQLAlchemy inventory example](https://github.com/UseCaseCore/usecasecore/tree/main/examples/fastapi_sqlalchemy_inventory)

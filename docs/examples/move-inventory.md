@@ -30,6 +30,10 @@ MoveInventoryCommand
 UseCaseCore makes this path explicit and reusable instead of re-implementing it
 in every service.
 
+This page walks through the in-memory teaching example. For the same action in
+a concrete FastAPI + SQLAlchemy app, see
+[`examples/fastapi_sqlalchemy_inventory`](https://github.com/UseCaseCore/usecasecore/tree/main/examples/fastapi_sqlalchemy_inventory).
+
 ## Runtime pieces
 
 The example uses:
