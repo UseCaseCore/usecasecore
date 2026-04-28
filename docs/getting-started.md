@@ -6,7 +6,7 @@ This page is kept for compatibility. The canonical quickstart is
 ## Install
 
 ```bash
-pip install usecasecore==0.1.0a2
+pip install usecasecore==0.1.0a3
 ```
 
 ## First mental model

@@ -28,7 +28,7 @@ The command layer Python apps keep rebuilding by accident. A standard execution 
 ## Install
 
 ```bash
-pip install usecasecore==0.1.0a2
+pip install usecasecore==0.1.0a3
 ```
 
 ## Core path
@@ -246,7 +246,7 @@ source /tmp/ucc-test/bin/activate
 python3 -m pip install \
   --index-url https://test.pypi.org/simple/ \
   --extra-index-url https://pypi.org/simple \
-  usecasecore==0.1.0a2
+  usecasecore==0.1.0a3
 python3 -c "from usecasecore import Command, Result, ExecutionContext, UseCase; print('OK')"
 deactivate
 ```
@@ -255,5 +255,5 @@ Only publish to PyPI after the TestPyPI install works.
 
 ## Status
 
-Early alpha. The current package release is `0.1.0a2`; the core abstractions
+Early alpha. The current package release is `0.1.0a3`; the core abstractions
 are intentionally small while the execution model settles.
